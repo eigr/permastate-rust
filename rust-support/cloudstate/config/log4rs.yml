@@ -7,7 +7,7 @@ appenders:
     kind: console
 
   # An appender named "requests" that writes to a file with a custom pattern encoder
-  requests:
+  cloudstate:
     kind: file
     path: "log/cloudstate.log"
     encoder:
@@ -15,19 +15,16 @@ appenders:
 
 # Set the default logging level to "warn" and attach the "stdout" appender to the root
 root:
-  level: warn
+  level: info
   appenders:
     - stdout
 
 loggers:
-  # Raise the maximum log level for events sent to the "app::backend::db" logger to "info"
-  app::backend::db:
-    level: info
-
-  # Route log events sent to the "app::requests" logger to the "requests" appender,
+  # Route log events sent to the "app::cloudstate" logger to the "cloudstate" appender,
   # and *not* the normal appenders installed at the root
-  app::requests:
-    level: info
+  app::cloudstate:
+    level: debug
     appenders:
-      - requests
+      - stdout
+      - cloudstate
     additive: false
