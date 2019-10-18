@@ -1,4 +1,9 @@
-pub mod cloudstate;
+#[macro_use]
+extern crate log;
+extern crate log4rs;
+
+pub mod protocol;
+pub mod serveless;
 
 #[cfg(test)]
 mod tests {

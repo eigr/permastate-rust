@@ -14,9 +14,21 @@ authors = ["Adriano Santos <sleipnir@bsd.com.br>"]
 license = "Apache-2.0"
 edition = "2018"
 
+# Compile protos
+build = "build.rs"
+
 [dependencies]
-log   = "0.4.8"
-tonic = "0.1.0-alpha.2"
-bytes = "0.4"
-prost = "0.5"
-prost-derive = "0.5"
+log           = "0.4.8"
+log4rs        = "0.8.3"
+config        = "0.9.3"
+actix         = "0.8"
+tonic         = "0.1.0-alpha.2"
+tokio         = "0.2.0-alpha.6"
+bytes         = "0.4"
+prost         = "0.5"
+prost-derive  = "0.5"
+prost-types   = "0.5"
+rustc_version = "0.2.3"
+
+[build-dependencies]
+tonic-build = "0.1.0-alpha.2"
