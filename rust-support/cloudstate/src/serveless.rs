@@ -5,12 +5,62 @@ use log::info;
 use actix::prelude::*;
 use crate::protocol::{Options, ProtocolHandlerActor, RegisterMessage};
 
+#[derive(Debug, Clone)]
+pub struct EntityService {
+    entity_type: String,
+    protos: Vec<String>,
+    persistence_id: String,
+    snapshot_every: u16,
+}
+
+impl Default for EntityService {
+
+    fn default() -> Self {
+        EntityService {
+            entity_type: String::from(""),
+            protos: vec![],
+            persistence_id: String::from(""),
+            snapshot_every: 0
+        }
+    }
+}
+
+impl EntityService {
+
+    pub fn persistence_id(&mut self, persistence_id: String) -> &mut EntityService {
+        self.persistence_id = persistence_id;
+        self
+    }
+
+    pub fn protos(&mut self, protos: Vec<String>) -> &mut EntityService {
+        self.protos = protos;
+        self
+    }
+
+    pub fn snapshot(&mut self, every: u16) -> &mut EntityService {
+        self.snapshot_every = every;
+        self
+    }
+
+    pub fn event_sourced(&mut self) -> EntityService {
+        self.entity_type = "cloudstate.eventsourced.EventSourced".to_string();
+        self.clone()
+    }
+
+    pub fn crdt(&mut self) -> EntityService {
+        self.entity_type = "cloudstate.crdt.Crdt".to_string();
+        self.clone()
+    }
+
+}
+
 #[derive(Debug)]
 pub struct CloudState {
-    entity_type: String,
-    additional_descriptors: Option<Vec<String>>,
+    entity: EntityService,
+    desciptor: String,
+    additional_desciptors: Option<Vec<String>>,
     service_name: String,
-    persistence_id: String,
+    service_version: String,
     actor_system_name: String,
     server_port: u16,
 }
@@ -19,10 +69,11 @@ impl Default for CloudState {
 
     fn default() -> CloudState {
         CloudState {
-            entity_type: "".to_string(),
-            additional_descriptors: Option::None,
-            service_name: "".to_string(),
-            persistence_id: "".to_string(),
+            entity: EntityService::default(),
+            desciptor: String::from(""),
+            additional_desciptors: Option::None,
+            service_name: String::from(""),
+            service_version: "0.0.1".to_string(),
             actor_system_name: "cloudstate-rust-system".to_string(),
             server_port: 8088
         }
@@ -35,15 +86,15 @@ impl CloudState {
         Default::default()
     }
 
-    pub fn register_event_sourced(&mut self, entity: String, additional_descriptors: Option<Vec<String>>) -> &mut CloudState {
-        self.entity_type = entity;
-        self.additional_descriptors = additional_descriptors;
+    pub fn register_event_sourced(&mut self, service_name: String, entity_service: EntityService) -> &mut CloudState {
+        self.service_name = service_name;
+        self.entity = entity_service;
         self
     }
 
-    pub fn register_event_crdt(&mut self, entity: String, additional_descriptors:  Option<Vec<String>>) -> &mut CloudState {
-        self.entity_type = entity;
-        self.additional_descriptors = additional_descriptors;
+    pub fn register_event_crdt(&mut self, service_name: String, entity_service: EntityService) -> &mut CloudState {
+        self.service_name = service_name;
+        self.entity = entity_service;
         self
     }
 
@@ -55,10 +106,13 @@ impl CloudState {
         let addr = ProtocolHandlerActor{}.start();
 
         let options = Options {
-            entity_type: self.entity_type.clone(),
-            service_name: "ShoppingCart".to_string(),
-            persistence_id: self.persistence_id.clone(),
-            grpc_port: self.server_port
+            entity_type: self.entity.entity_type.clone(),
+            service_name: self.service_name.clone(),
+            desciptor: self.desciptor.clone(),
+            additional_desciptors: self.additional_desciptors.clone(),
+            persistence_id: self.entity.persistence_id.clone(),
+            service_version: self.service_version.clone(),
+            server_port: self.server_port
         };
 
         let msg = RegisterMessage {
@@ -75,7 +129,10 @@ impl CloudState {
             .map_err(|_| ())
         );
 
-        actor_system.run();
+        actor_system.run()
+            .map_err(|err| error!("Error on start ActorSystem. Error: {:?}", err))
+            .ok();
+
         self
     }
 
