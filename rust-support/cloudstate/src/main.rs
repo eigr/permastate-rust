@@ -11,7 +11,7 @@ fn main() {
     log4rs::init_file("config/log4rs.yml", Default::default()).unwrap();
     info!("Starting CloudState Server...");
 
-    let service = EntityService::default()
+    let service = EntityService::new()
         .persistence_id("shopping-cart".to_string())
         .protos(vec!["shoppingcart/shoppingcart.proto".to_string(), "shoppingcart/persistence/domain.proto".to_string()])
         .snapshot(1)

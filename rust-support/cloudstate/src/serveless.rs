@@ -15,7 +15,7 @@ pub struct EntityService {
 
 impl Default for EntityService {
 
-    fn default() -> Self {
+    fn default() -> EntityService {
         EntityService {
             entity_type: String::from(""),
             protos: vec![],
@@ -26,6 +26,10 @@ impl Default for EntityService {
 }
 
 impl EntityService {
+
+    pub fn new() -> Self {
+        Default::default()
+    }
 
     pub fn persistence_id(&mut self, persistence_id: String) -> &mut EntityService {
         self.persistence_id = persistence_id;
