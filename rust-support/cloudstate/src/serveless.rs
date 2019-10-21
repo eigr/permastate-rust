@@ -86,13 +86,27 @@ impl CloudState {
         Default::default()
     }
 
-    pub fn register_event_sourced(&mut self, service_name: String, entity_service: EntityService) -> &mut CloudState {
+    pub fn service_name(&mut self, service_name: String) -> &mut CloudState {
         self.service_name = service_name;
-        self.entity = entity_service;
         self
     }
 
-    pub fn register_event_crdt(&mut self, service_name: String, entity_service: EntityService) -> &mut CloudState {
+    pub fn service_version(&mut self, service_version: String) -> &mut CloudState {
+        self.service_version = service_version;
+        self
+    }
+
+    pub fn actor_system_name(&mut self, system_name: String) -> &mut CloudState {
+        self.actor_system_name = system_name;
+        self
+    }
+
+    pub fn port(&mut self, server_port: u16) -> &mut CloudState {
+        self.server_port = server_port;
+        self
+    }
+
+    pub fn register_entity_service(&mut self, service_name: String, entity_service: EntityService) -> &mut CloudState {
         self.service_name = service_name;
         self.entity = entity_service;
         self

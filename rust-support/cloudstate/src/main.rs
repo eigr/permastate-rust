@@ -9,16 +9,17 @@ fn main() {
 
     // Cloudstate depends of log4rs to print messages
     log4rs::init_file("config/log4rs.yml", Default::default()).unwrap();
-    info!("Starting Cloudstate server...");
+    info!("Starting CloudState Server...");
 
-    let entity_service = EntityService::default()
+    let service = EntityService::default()
         .persistence_id("shopping-cart".to_string())
         .protos(vec!["shoppingcart/shoppingcart.proto".to_string(), "shoppingcart/persistence/domain.proto".to_string()])
+        .snapshot(1)
         .event_sourced();
 
     CloudState::new()
-        .register_event_sourced(
-            "com.example.shoppingcart.ShoppingCart".to_string(),
-            entity_service)
+        .register_entity_service(
+            String::from("com.example.shoppingcart.ShoppingCart"),
+            service)
         .start();
 }
