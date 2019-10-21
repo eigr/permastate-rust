@@ -94,7 +94,7 @@ pub mod server {
 
             let vec_entities = vec![entity];
 
-            let lib_name: String = "cloudstate-rust-support".to_string();
+            let lib_name: String = String::from("cloudstate-rust-support");
             let lib_version: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
             let runtime = "rustc ".to_owned() + &version().unwrap().to_string();
 
@@ -151,13 +151,13 @@ pub mod server {
             // Create the runtime
             let rt = Runtime::new().unwrap();
 
-            let cloneopts = self.options;
+            let clone_opts = self.options;
 
             rt.block_on(async {
                 debug!("Now running on a worker thread");
 
-                let opts = cloneopts.clone();
-                let discover = Discover{ opts: cloneopts };
+                let opts = clone_opts.clone();
+                let discover = Discover{ opts: clone_opts };
 
                 let addr = SocketAddr::new(
                     IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
