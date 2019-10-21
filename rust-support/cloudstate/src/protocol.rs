@@ -6,6 +6,10 @@ use log::{info};
 use actix::prelude::*;
 use crate::protocol::server::GrpcServer;
 
+pub mod spec {
+    tonic::include_proto!("cloudstate");
+}
+
 #[derive(Debug, Clone)]
 pub struct Options {
     pub entity_type: String,
@@ -55,15 +59,14 @@ pub mod server {
     use tonic::{transport::Server, Request, Response, Status};
     use prost_types::{FileDescriptorProto, FileDescriptorSet};
 
-    pub mod spec {
-        tonic::include_proto!("cloudstate");
-    }
-
-    use spec::{
+    use crate::protocol::spec::{
         server::{EntityDiscovery, EntityDiscoveryServer},
         ProxyInfo, EntitySpec, ServiceInfo, Entity,UserFunctionError,
     };
 
+    use crate::protocol::router::Router;
+
+    #[derive(Debug, Clone)]
     pub struct Discover {
         pub opts: Options,
     }
@@ -163,7 +166,11 @@ pub mod server {
 
                 info!("Start CloudState gRPC in 0.0.0.0:{}", opts.server_port);
                 Server::builder()
-                    .serve(addr, EntityDiscoveryServer::new(discover))
+                    .serve(
+                        addr,
+                        Router {
+                            entity_discovery: EntityDiscoveryServer::new(discover)
+                        })
                     .await
                     .map_err(|err| error!("Error during start server phase: {:?}", err))
                     .ok();
@@ -172,6 +179,125 @@ pub mod server {
             Ok(())
         }
     }
+
+}
+
+pub mod router {
+    use futures_util::future;
+    use http::{Request, Response};
+
+    use std::{
+        future::Future,
+        pin::Pin,
+        task::{Context, Poll},
+    };
+
+    use tonic::{body::BoxBody, transport::Body};
+
+    use crate::protocol::spec::{
+        server::{EntityDiscoveryServer},
+    };
+
+    use tower::Service;
+
+    #[derive(Clone)]
+    pub struct Router {
+        pub entity_discovery: EntityDiscoveryServer<crate::protocol::server::Discover>,
+        //pub entity_discovery: EntityDiscovery,
+    }
+
+    impl Service<()> for Router {
+        type Response = Router;
+        type Error = Never;
+        type Future = future::Ready<Result<Self::Response, Self::Error>>;
+
+        fn poll_ready(&mut self, _cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+            Ok(()).into()
+        }
+
+        fn call(&mut self, _req: ()) -> Self::Future {
+            future::ok(self.clone())
+        }
+    }
+
+    impl Service<Request<Body>> for Router {
+        type Response = Response<BoxBody>;
+        type Error = Never;
+        type Future =
+        Pin<Box<dyn Future<Output = Result<Response<BoxBody>, Never>> + Send + 'static>>;
+
+        fn poll_ready(&mut self, _cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+            Ok(()).into()
+        }
+
+        fn call(&mut self, req: Request<Body>) -> Self::Future {
+            let mut segments = req.uri().path().split("/");
+            segments.next();
+            let service = segments.next().unwrap();
+
+            match service {
+                "cloudstate.EntityDiscovery" => {
+                    let me = self.clone();
+                    Box::pin(async move {
+                        let mut svc = me.entity_discovery;
+                        let mut svc = svc.call(()).await.unwrap();
+
+                        let res = svc.call(req).await.unwrap();
+                        Ok(res)
+                    })
+                }
+
+                /*"cloudstate.eventsourced.EventSourced" => {
+                    let me = self.clone();
+                    Box::pin(async move {
+                        let mut svc =
+                            UnimplementedServiceServer::from_shared(me.unimplemented_service);
+                        let mut svc = svc.call(()).await.unwrap();
+
+                        let res = svc.call(req).await.unwrap();
+                        Ok(res)
+                    })
+                }*/
+
+                /*"cloudstate.crdt.Crdt" => {
+                    let me = self.clone();
+                    Box::pin(async move {
+                        let mut svc =
+                            UnimplementedServiceServer::from_shared(me.unimplemented_service);
+                        let mut svc = svc.call(()).await.unwrap();
+
+                        let res = svc.call(req).await.unwrap();
+                        Ok(res)
+                    })
+                }*/
+
+                /*"cloudstate.function.StatelessFunction" => {
+                    let me = self.clone();
+                    Box::pin(async move {
+                        let mut svc =
+                            UnimplementedServiceServer::from_shared(me.unimplemented_service);
+                        let mut svc = svc.call(()).await.unwrap();
+
+                        let res = svc.call(req).await.unwrap();
+                        Ok(res)
+                    })
+                }*/
+
+                _ => unimplemented!(),
+            }
+        }
+    }
+
+    #[derive(Debug)]
+    pub enum Never {}
+
+    impl std::fmt::Display for Never {
+        fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            match *self {}
+        }
+    }
+
+    impl std::error::Error for Never {}
 }
 
 
