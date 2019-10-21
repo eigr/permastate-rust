@@ -73,8 +73,8 @@ impl Default for CloudState {
             desciptor: String::from(""),
             additional_desciptors: Option::None,
             service_name: String::from(""),
-            service_version: "0.0.1".to_string(),
-            actor_system_name: "cloudstate-rust-system".to_string(),
+            service_version: String::from("0.0.1"),
+            actor_system_name: String::from("cloudstate-rust-system"),
             server_port: 8088
         }
     }
