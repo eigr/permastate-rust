@@ -3,14 +3,14 @@ extern crate log4rs;
 
 use log::info;
 use actix::prelude::*;
-use crate::protocol::{Options, ProtocolHandlerActor, RegisterMessage};
+use crate::protocol::{Options, ProtocolHandlerActor, StartMessage};
 
 #[derive(Debug, Clone)]
 pub struct EntityService {
-    entity_type: String,
-    protos: Vec<String>,
-    persistence_id: String,
-    snapshot_every: u16,
+    pub entity_type: String,
+    pub protos: Vec<String>,
+    pub persistence_id: String,
+    pub snapshot_every: u16,
 }
 
 impl Default for EntityService {
@@ -61,8 +61,8 @@ impl EntityService {
 #[derive(Debug)]
 pub struct CloudState {
     entity: EntityService,
-    desciptor: String,
-    additional_desciptors: Option<Vec<String>>,
+    descriptor: String,
+    additional_descriptors: Option<Vec<String>>,
     service_name: String,
     service_version: String,
     actor_system_name: String,
@@ -74,8 +74,8 @@ impl Default for CloudState {
     fn default() -> CloudState {
         CloudState {
             entity: EntityService::default(),
-            desciptor: String::from(""),
-            additional_desciptors: Option::None,
+            descriptor: String::from(""),
+            additional_descriptors: Option::None,
             service_name: String::from(""),
             service_version: String::from("0.0.1"),
             actor_system_name: String::from("cloudstate-rust-system"),
@@ -117,23 +117,21 @@ impl CloudState {
     }
 
     pub fn start(&mut self) -> &mut CloudState {
-        debug!("Create ActorSystem {:?}", self.actor_system_name);
-        let actor_system = System::new("cloudstate-rust-system".to_string());
+        let system = self.actor_system_name.clone();
+        debug!("Create ActorSystem {:?}", system);
+        let actor_system = System::new(system);
 
         // start new actor
         let addr = ProtocolHandlerActor{}.start();
 
         let options = Options {
-            entity_type: self.entity.entity_type.clone(),
+            entity_service: self.entity.clone(),
             service_name: self.service_name.clone(),
-            desciptor: self.desciptor.clone(),
-            additional_desciptors: self.additional_desciptors.clone(),
-            persistence_id: self.entity.persistence_id.clone(),
             service_version: self.service_version.clone(),
             server_port: self.server_port
         };
 
-        let msg = RegisterMessage {
+        let msg = StartMessage {
             opts: options,
         };
         
