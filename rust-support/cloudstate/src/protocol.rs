@@ -5,6 +5,7 @@ extern crate rustc_version;
 use log::{info};
 use actix::prelude::*;
 use crate::protocol::server::GrpcServer;
+use crate::serveless::EntityService;
 
 pub mod spec {
     tonic::include_proto!("cloudstate");
@@ -12,20 +13,17 @@ pub mod spec {
 
 #[derive(Debug, Clone)]
 pub struct Options {
-    pub entity_type: String,
+    pub entity_service: EntityService,
     pub service_name: String,
-    pub desciptor: String,
-    pub additional_desciptors: Option<Vec<String>>,
-    pub persistence_id: String,
     pub service_version: String,
     pub server_port: u16,
 }
 
-pub struct RegisterMessage {
+pub struct StartMessage {
     pub opts: Options,
 }
 
-impl Message for RegisterMessage {
+impl Message for StartMessage {
     type Result = Result<bool, std::io::Error>;
 }
 
@@ -36,10 +34,10 @@ impl Actor for ProtocolHandlerActor {
 }
 
 // Actor handler
-impl Handler<RegisterMessage> for ProtocolHandlerActor {
+impl Handler<StartMessage> for ProtocolHandlerActor {
     type Result = Result<bool, std::io::Error>;
 
-    fn handle(&mut self, _msg: RegisterMessage, _ctx: &mut Context<Self>) -> Self::Result {
+    fn handle(&mut self, _msg: StartMessage, _ctx: &mut Context<Self>) -> Self::Result {
         info!("Starting server and register messages");
         Ok(
             GrpcServer::new(_msg.opts)
@@ -87,9 +85,9 @@ pub mod server {
             info!("Supported sidecar entity types: {:?}", proxy_info.supported_entity_types);
 
             let entity = Entity {
-                entity_type: self.opts.entity_type.to_string(), 
+                entity_type: self.opts.entity_service.entity_type.to_string(),
                 service_name: self.opts.service_name.to_string(),
-                persistence_id: self.opts.persistence_id.to_string(),
+                persistence_id: self.opts.entity_service.persistence_id.to_string(),
             };
 
             let vec_entities = vec![entity];
@@ -105,6 +103,14 @@ pub mod server {
                 support_library_name: lib_name,
                 support_library_version: lib_version.unwrap_or("0.0.1").to_string(),
             };
+
+            // protoc --include_imports \
+            // --proto_path=<proto file directory> \
+            // --descriptor_set_out=user-function.desc \
+            // <path to .proto files>
+            //let tmp = tempfile::Builder::new().prefix("prost-build").tempdir()?;
+            //let descriptor_set = tmp.path().join("prost-descriptor-set");
+
 
             /*FileDescriptorSet{
                 file: vec![]
@@ -183,6 +189,7 @@ pub mod server {
 }
 
 pub mod router {
+    use tower::Service;
     use futures_util::future;
     use http::{Request, Response};
 
@@ -197,8 +204,6 @@ pub mod router {
     use crate::protocol::spec::{
         server::{EntityDiscoveryServer},
     };
-
-    use tower::Service;
 
     #[derive(Clone)]
     pub struct Router {

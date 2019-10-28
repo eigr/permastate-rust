@@ -4,6 +4,7 @@ extern crate log4rs;
 
 pub mod protocol;
 pub mod serveless;
+pub mod handlers;
 
 #[cfg(test)]
 mod tests {
