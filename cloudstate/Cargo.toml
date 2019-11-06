@@ -1,0 +1,40 @@
+[package]
+name = "cloudstate"
+version = "0.0.1"
+description = "Support for implementing CloudState functions"
+keywords = [
+    "serverless",
+    "cloudstate",
+    "event-sourcing",
+    "crdt"
+  ]
+homepage = "https://cloudstate.io/"
+documentation = "https://cloudstate.io/docs/"
+authors = ["Adriano Santos <sleipnir@bsd.com.br>"]
+license = "Apache-2.0"
+edition = "2018"
+
+# Compile protos
+build = "build.rs"
+
+[dependencies]
+log           = "0.4.8"
+log4rs        = "0.8.3"
+config        = "0.9.3"
+actix         = "0.8"
+http          = "0.1"
+tonic         = "0.1.0-alpha.2"
+tokio         = "0.2.0-alpha.6"
+tower         = "=0.3.0-alpha.2"
+bytes         = "0.4"
+prost         = "0.5"
+prost-derive  = "0.5"
+prost-types   = "0.5"
+rustc_version = "0.2.3"
+futures-core-preview = "=0.3.0-alpha.19"
+futures-util-preview = "=0.3.0-alpha.19"
+
+[build-dependencies]
+tonic-build = "0.1.0-alpha.2"
+protoc-rust = "2.0"
+#protobuf-codegen-pure = "2.3"
