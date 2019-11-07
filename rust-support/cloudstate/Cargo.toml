@@ -36,3 +36,5 @@ futures-util-preview = "=0.3.0-alpha.19"
 
 [build-dependencies]
 tonic-build = "0.1.0-alpha.2"
+protoc-rust = "2.0"
+#protobuf-codegen-pure = "2.3"
