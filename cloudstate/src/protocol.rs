@@ -61,9 +61,7 @@ pub mod server {
         server::{EntityDiscovery, EntityDiscoveryServer},
         ProxyInfo, EntitySpec, ServiceInfo, Entity,UserFunctionError,
     };
-
-    use crate::protocol::router::Router;
-
+    
     #[derive(Debug, Clone)]
     pub struct Discover {
         pub opts: Options,
