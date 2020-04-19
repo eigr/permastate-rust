@@ -13,7 +13,6 @@ fn main() {
 
     let service = EntityService::new()
         .persistence_id("shopping-cart".to_string())
-        .protos(vec!["shoppingcart/shoppingcart.proto".to_string(), "shoppingcart/persistence/domain.proto".to_string()])
         .snapshot(1)
         .event_sourced();
 

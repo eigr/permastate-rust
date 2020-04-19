@@ -54,14 +54,17 @@ pub mod server {
     use super::rustc_version::version;
     use log::{info, debug};
     use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+    use std::fs::File;
+    use std::io::Read;
+
     use tonic::{transport::Server, Request, Response, Status};
-    use prost_types::{FileDescriptorProto, FileDescriptorSet};
+    //use prost_types::{FileDescriptorProto, FileDescriptorSet};
 
     use crate::protocol::spec::{
         server::{EntityDiscovery, EntityDiscoveryServer},
         ProxyInfo, EntitySpec, ServiceInfo, Entity,UserFunctionError,
     };
-    
+
     #[derive(Debug, Clone)]
     pub struct Discover {
         pub opts: Options,
@@ -99,7 +102,7 @@ pub mod server {
                 service_version: self.opts.service_version.to_string(),
                 service_runtime: runtime,
                 support_library_name: lib_name,
-                support_library_version: lib_version.unwrap_or("0.0.1").to_string(),
+                support_library_version: lib_version.unwrap_or("0.5.0").to_string(),
             };
 
             // protoc --include_imports \
@@ -110,12 +113,13 @@ pub mod server {
             //let descriptor_set = tmp.path().join("prost-descriptor-set");
 
 
-            /*FileDescriptorSet{
-                file: vec![]
-            }*/
+            let mut file = File::open("user-function.desc").unwrap();
+
+            let mut data = Vec::new();
+            file.read_to_end(&mut data).unwrap();
 
             let reply = EntitySpec {
-                proto: vec![],
+                proto: data,
                 entities: vec_entities,
                 service_info: Some(info),
             };

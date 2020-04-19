@@ -8,7 +8,6 @@ use crate::protocol::{Options, ProtocolHandlerActor, StartMessage};
 #[derive(Debug, Clone)]
 pub struct EntityService {
     pub entity_type: String,
-    pub protos: Vec<String>,
     pub persistence_id: String,
     pub snapshot_every: u16,
 }
@@ -18,7 +17,6 @@ impl Default for EntityService {
     fn default() -> EntityService {
         EntityService {
             entity_type: String::from(""),
-            protos: vec![],
             persistence_id: String::from(""),
             snapshot_every: 0
         }
@@ -33,11 +31,6 @@ impl EntityService {
 
     pub fn persistence_id(&mut self, persistence_id: String) -> &mut EntityService {
         self.persistence_id = persistence_id;
-        self
-    }
-
-    pub fn protos(&mut self, protos: Vec<String>) -> &mut EntityService {
-        self.protos = protos;
         self
     }
 
@@ -61,8 +54,6 @@ impl EntityService {
 #[derive(Debug)]
 pub struct CloudState {
     entity: EntityService,
-    descriptor: String,
-    additional_descriptors: Option<Vec<String>>,
     service_name: String,
     service_version: String,
     actor_system_name: String,
@@ -74,12 +65,10 @@ impl Default for CloudState {
     fn default() -> CloudState {
         CloudState {
             entity: EntityService::default(),
-            descriptor: String::from(""),
-            additional_descriptors: Option::None,
             service_name: String::from(""),
-            service_version: String::from("0.0.1"),
+            service_version: String::from("0.5.0"),
             actor_system_name: String::from("cloudstate-rust-system"),
-            server_port: 8088
+            server_port: 8080
         }
     }
 }
